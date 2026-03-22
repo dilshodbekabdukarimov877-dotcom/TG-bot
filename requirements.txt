@@ -1,4 +1,4 @@
-google-generativeai
 aiogram
+google-generativeai
 Pillow
 flask
