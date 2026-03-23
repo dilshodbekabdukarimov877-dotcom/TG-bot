@@ -18,12 +18,12 @@ from PIL import Image
 from flask import Flask
 
 # --- SOZLAMALAR ---
-TOKEN = "8376336640:AAGJzxZ2fvN-71gsucdGACqqlhBVv2lFrak"
+TOKEN = "AIzaSyDDVz-r7JoOww4h3yrkYHIfEdv1Hdh1TEI"
 GEMINI_KEY = "AIzaSyAxr3tGTGBSjN2gzx8Q2ed5oDuQJ453d3A"  # O'z kalitingizni qo'ying
 ADMIN_ID = 7806849831
 
 # Gemini sozlamalari
-genai.configure(api_key="AIzaSyAxr3tGTGBSjN2gzx8Q2ed5oDuQJ453d3A")
+genai.configure(api_key="AIzaSyDDVz-r7JoOww4h3yrkYHIfEdv1Hdh1TEI")
 model = genai.GenerativeModel('gemini-2.5-flash')
 
 # Logger va Dispatcher
