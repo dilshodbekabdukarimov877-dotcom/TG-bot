@@ -19,11 +19,11 @@ from flask import Flask
 
 # --- SOZLAMALAR ---
 TOKEN = "AIzaSyDDVz-r7JoOww4h3yrkYHIfEdv1Hdh1TEI"
-GEMINI_KEY = "AIzaSyAY4F5N6RDBffJGNZ_JdXGV75PuzQhzFrA"  # O'z kalitingizni qo'ying
+GEMINI_KEY = "AIzaSyDvR5XWOmVow0bdU7yiZLVRyFMGodFqD8w"  # O'z kalitingizni qo'ying
 ADMIN_ID = 7806849831
 
 # Gemini sozlamalari
-genai.configure(api_key="AIzaSyAY4F5N6RDBffJGNZ_JdXGV75PuzQhzFrA")
+genai.configure(api_key="AIzaSyDvR5XWOmVow0bdU7yiZLVRyFMGodFqD8w")
 model = genai.GenerativeModel('gemini-2.5-flash')
 
 # Logger va Dispatcher
