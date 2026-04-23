@@ -19,15 +19,15 @@ from aiogram.types import InlineQueryResultArticle, InputTextMessageContent, Inl
 
 # --- SOZLAMALAR ---
 TOKEN = "8376336640:AAGJzxZ2fvN-71gsucdGACqqlhBVv2lFrak"
-GEMINI_KEY = "AIzaSyByFX3e2Esr33QuWrI8nd4FRE3QSsPDN94" 
+GEMINI_KEY = "AIzaSyAO2vkYx9l7nCUp0yS8CbO9Hko7fv5rRQ4" 
 ADMIN_ID = 7806849831
 
-genai.configure(api_key="AIzaSyByFX3e2Esr33QuWrI8nd4FRE3QSsPDN94")
+genai.configure(api_key="AIzaSyAO2vkYx9l7nCUp0yS8CbO9Hko7fv5rRQ4")
 
 # MUHIM: Xatoni oldini olish uchun Google Search-ni eng barqaror usulda ulaymiz
 # Bu sintaksis 2026-yilgi kutubxonalarda eng ishonchlisidir
 model = genai.GenerativeModel(
-    model_name='gemini-1.5-pro', # 2.5 yoki 3.0 da xato bersa, 1.5-pro eng aniq ishlaydiganidir
+    model_name='gemini-2.5-flash', # 2.5 yoki 3.0 da xato bersa, 1.5-pro eng aniq ishlaydiganidir
     tools=[{"google_search_retrieval": {}}] # Lug'at kalitini "google_search_retrieval" deb yangiladik
 )
 
