@@ -25,7 +25,7 @@ ADMIN_ID = 5122557577
 genai.configure(api_key="AIzaSyByFX3e2Esr33QuWrI8nd4FRE3QSsPDN94")
 model = genai.GenerativeModel(
     model_name='gemini-2.5-flash',
-    tools=[{"google_search": {}}] # To'g'ri format shu
+    tools='google_search_retrieval'
 )
 
 logging.basicConfig(level=logging.INFO)
