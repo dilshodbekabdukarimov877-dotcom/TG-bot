@@ -15,7 +15,7 @@ install_packages()
 import google.generativeai as genai
 from aiogram import Bot, Dispatcher, types, F
 from aiogram.filters import Command, CommandObject
-from aiogram.types import InlineQueryResultArticle, InputTextMessageContent, InlineQueryResultPhoto
+from aiogram.types import InlineQueryResultArticle, InputTextMessageContent
 
 # --- SOZLAMALAR ---
 TOKEN = "8376336640:AAGJzxZ2fvN-71gsucdGACqqlhBVv2lFrak"
@@ -23,21 +23,8 @@ GEMINI_KEY = "AIzaSyAO2vkYx9l7nCUp0yS8CbO9Hko7fv5rRQ4"
 ADMIN_ID = 7806849831
 
 genai.configure(api_key="AIzaSyAO2vkYx9l7nCUp0yS8CbO9Hko7fv5rRQ4")
-
-# MUHIM: Xatoni oldini olish uchun Google Search-ni eng barqaror usulda ulaymiz
-# Bu sintaksis 2026-yilgi kutubxonalarda eng ishonchlisidir
-# Eski google_search_retrieval o'rniga yangi google_search formatidan foydalanamiz
-# Kutubxonaning o'zidan kerakli asbobni chaqiramiz
-from google.generativeai.types import content_types
-
-# Kutubxona uchun eng tushunarli format
-# Kutubxonani o'zidan Tool klassini chaqiramiz
-from google.generativeai import types as reporting_types
-
-model = genai.GenerativeModel(
-    model_name='gemini-2.5-flash',
-    tools=[reporting_types.Tool(google_search=reporting_types.GoogleSearch())]
-)
+# QIDIRUVSIZ, LEKIN 2.5 FLASH MODELI BILAN
+model = genai.GenerativeModel(model_name='gemini-2.5-flash')
 
 logging.basicConfig(level=logging.INFO)
 dp = Dispatcher()
@@ -66,7 +53,7 @@ def get_chat(u_id):
     conn = sqlite3.connect(DB_NAME); rows = conn.execute('SELECT role, content FROM history WHERE user_id = ? ORDER BY rowid ASC', (u_id,)).fetchall(); conn.close()
     return [{"role": r[0], "parts": [r[1]]} for r in rows]
 
-# --- BUYRUQLAR (START, HELP, CLEAR, STAT, REKLAMA) ---
+# --- ASOSIY BUYRUQLAR ---
 
 @dp.message(Command("start"))
 async def cmd_start(m: types.Message):
@@ -80,41 +67,54 @@ async def cmd_start(m: types.Message):
 
 @dp.message(Command("help"))
 async def cmd_help(m: types.Message):
-    await m.answer("🤖 **Funksiyalar:**\n- AI suhbat (Xotira bilan)\n- Google Search (Internetdan qidiruv)\n- Media tahlil (Rasm/Video/PDF)\n- Ovozli xabarlar\n- Eslatkichlar: `/remind 5 dars`", parse_mode="Markdown")
+    help_text = (
+        "🤖 **Bot imkoniyatlari:**\n\n"
+        "💬 **Matn:** Savol bering, AI javob beradi.\n"
+        "🖼 **Media:** Rasm, Video va PDF fayllarni tahlil qilaman.\n"
+        "🎙 **Ovoz:** Ovozli xabarlarni tushunaman.\n"
+        "⏰ **Eslatkich:** `/remind 5 vazifa` - belgilangan vaqtda eslataman.\n"
+        "🧹 **Tozalash:** `/clear` - suhbat tarixini o'chiradi.\n\n"
+        "👨‍💻 **Admin:** Statitika va Reklama funksiyalari."
+    )
+    await m.answer(help_text, parse_mode="Markdown")
 
 @dp.message(Command("clear"))
 async def cmd_clear(m: types.Message):
     conn = sqlite3.connect(DB_NAME); conn.execute('DELETE FROM history WHERE user_id = ?', (m.from_user.id,)); conn.commit(); conn.close()
-    await m.answer("🧹 Tarix tozalandi.")
+    await m.answer("🧹 Suhbat tarixi tozalandi.")
+
+# --- ADMIN PANEL ---
 
 @dp.message(Command("stat"))
 async def cmd_stat(m: types.Message):
-    if m.from_user.id != ADMIN_ID:
-        await m.answer("⛔️ Admin emasiz.")
-        return
+    if m.from_user.id != ADMIN_ID: return
     conn = sqlite3.connect(DB_NAME); count = conn.execute('SELECT count(*) FROM users').fetchone()[0]; conn.close()
-    await m.answer(f"📊 Jami userlar: {count}")
+    await m.answer(f"📊 Jami foydalanuvchilar: {count} ta")
 
 @dp.message(Command("reklama"))
 async def cmd_reklama(m: types.Message, bot: Bot):
     if m.from_user.id != ADMIN_ID: return
     text = m.text.replace("/reklama", "").strip()
-    if not text: return await m.answer("Matn yozing.")
+    if not text: return await m.answer("Reklama matnini yozing.")
+    
     conn = sqlite3.connect(DB_NAME); users = conn.execute('SELECT user_id FROM users').fetchall(); conn.close()
+    success, fail = 0, 0
     for u in users:
-        try: await bot.send_message(u[0], text); await asyncio.sleep(0.05)
-        except: continue
-    await m.answer("✅ Yuborildi.")
+        try: await bot.send_message(u[0], text); success += 1; await asyncio.sleep(0.05)
+        except: fail += 1
+    await m.answer(f"📢 Natija:\n✅ Yuborildi: {success}\n❌ Yuborilmadi: {fail}")
 
-# --- REMINDERS ---
+# --- ESLATKICHLAR (REMINDERS) ---
+
 @dp.message(Command("remind"))
 async def cmd_remind(m: types.Message, command: CommandObject):
+    if not command.args: return await m.answer("Masalan: `/remind 5 dars`")
     try:
         minutes, task = command.args.split(" ", 1)
         r_time = datetime.datetime.now() + datetime.timedelta(minutes=int(minutes))
         conn = sqlite3.connect(DB_NAME); conn.execute('INSERT INTO reminders VALUES (?, ?, ?)', (m.from_user.id, r_time.isoformat(), task)); conn.commit(); conn.close()
-        await m.answer(f"🔔 Eslatkich saqlandi ({minutes} min).")
-    except: await m.answer("Format: `/remind 10 dars`")
+        await m.answer(f"✅ Saqlandi! {minutes} minutdan keyin eslataman.")
+    except: await m.answer("❌ Xato format. `/remind 10 vazifa` deb yozing.")
 
 async def check_reminders(bot: Bot):
     while True:
@@ -126,34 +126,42 @@ async def check_reminders(bot: Bot):
             conn.execute('DELETE FROM reminders WHERE rowid = ?', (r_id,))
         conn.commit(); conn.close(); await asyncio.sleep(20)
 
-# --- MEDIA & VOICE ---
+# --- MEDIA TAHLIL (Image, Video, PDF, Voice) ---
+
 @dp.message(F.voice)
 async def handle_voice(m: types.Message, bot: Bot):
     wait = await m.answer("🎙 Eshityapman...")
     try:
         f = await bot.get_file(m.voice.file_id); d = await bot.download_file(f.file_path)
-        resp = model.generate_content(["Ovozni tahlil qil:", {"mime_type": "audio/ogg", "data": d.read()}])
+        resp = model.generate_content(["Ovozli xabarni tahlil qil va javob ber:", {"mime_type": "audio/ogg", "data": d.read()}])
         await wait.edit_text(resp.text)
-    except: await wait.edit_text("🎙 Xato.")
+    except: await wait.edit_text("🎙 Ovozni tahlil qilishda xatolik.")
 
 @dp.message(F.document | F.video | F.photo)
 async def handle_media(m: types.Message, bot: Bot):
-    wait = await m.answer("🔍 Tahlil...")
+    wait = await m.answer("🔍 Faylni tahlil qilyapman...")
     try:
-        f_id = m.document.file_id if m.document else (m.video.file_id if m.video else m.photo[-1].file_id)
+        if m.document:
+            f_id = m.document.file_id; mime = m.document.mime_type
+        elif m.video:
+            f_id = m.video.file_id; mime = "video/mp4"
+        else:
+            f_id = m.photo[-1].file_id; mime = "image/jpeg"
+            
         f_p = await bot.get_file(f_id); f_d = await bot.download_file(f_p.file_path)
-        mime = m.document.mime_type if m.document else ("video/mp4" if m.video else "image/jpeg")
-        resp = model.generate_content([m.caption or "Tahlil qil:", {"mime_type": mime, "data": f_d.read()}])
+        resp = model.generate_content([m.caption or "Ushbu faylni tahlil qil:", {"mime_type": mime, "data": f_d.read()}])
         await wait.edit_text(resp.text)
-    except: await wait.edit_text("❌ Xato.")
+    except Exception as e:
+        await wait.edit_text(f"❌ Fayl tahlilida xatolik: {str(e)}")
 
-# --- INLINE & TEXT ---
+# --- INLINE VA MATN ---
+
 @dp.inline_query()
 async def inline_handler(q: types.InlineQuery):
     if not q.query: return
     try:
         res = model.generate_content(q.query)
-        results = [InlineQueryResultArticle(id=str(uuid.uuid4()), title="AI", input_message_content=InputTextMessageContent(message_text=res.text))]
+        results = [InlineQueryResultArticle(id=str(uuid.uuid4()), title="Gemini AI", input_message_content=InputTextMessageContent(message_text=res.text))]
         await q.answer(results, cache_time=5)
     except: pass
 
@@ -169,11 +177,11 @@ async def handle_text(m: types.Message):
         save_chat(m.from_user.id, "model", resp.text)
         await m.answer(resp.text)
     except Exception as e:
-        # Bu yerda xatoni foydalanuvchiga ko'rsatadi
-        await m.answer(f"Xatolik yuz berdi: {str(e)}")
-# --- RUN ---
+        await m.answer("⏳ Serverda yuklama yuqori. Birozdan so'ng urinib ko'ring.")
+
+# --- RENDER KEEPALIVE ---
 @app.route('/')
-def home(): return "Online"
+def home(): return "Bot is Running"
 def run(): app.run(host='0.0.0.0', port=int(os.environ.get("PORT", 8080)))
 
 async def main():
