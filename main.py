@@ -26,9 +26,10 @@ genai.configure(api_key="AIzaSyAO2vkYx9l7nCUp0yS8CbO9Hko7fv5rRQ4")
 
 # MUHIM: Xatoni oldini olish uchun Google Search-ni eng barqaror usulda ulaymiz
 # Bu sintaksis 2026-yilgi kutubxonalarda eng ishonchlisidir
+# Eski google_search_retrieval o'rniga yangi google_search formatidan foydalanamiz
 model = genai.GenerativeModel(
-    model_name='gemini-2.5-flash', # 2.5 yoki 3.0 da xato bersa, 1.5-pro eng aniq ishlaydiganidir
-    tools=[{"google_search_retrieval": {}}] # Lug'at kalitini "google_search_retrieval" deb yangiladik
+    model_name='gemini-2.5-flash', 
+    tools=[{"google_search": {}}] 
 )
 
 logging.basicConfig(level=logging.INFO)
