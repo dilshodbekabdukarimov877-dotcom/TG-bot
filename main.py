@@ -160,8 +160,9 @@ async def handle_text(m: types.Message):
         save_chat(m.from_user.id, "user", m.text)
         save_chat(m.from_user.id, "model", resp.text)
         await m.answer(resp.text)
-    except: await m.answer("⏳ Server band.")
-
+    except Exception as e:
+        # Bu yerda xatoni foydalanuvchiga ko'rsatadi
+        await m.answer(f"Xatolik yuz berdi: {str(e)}")
 # --- RUN ---
 @app.route('/')
 def home(): return "Online"
