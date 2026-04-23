@@ -63,7 +63,9 @@ def get_chat(u_id):
 @dp.message(Command("start"))
 async def cmd_start(m: types.Message):
     add_user(m.from_user.id)
-    await m.answer(f"Salom {m.from_user.full_name}! Bot to'liq quvvatda ishlayapti. Google Search va barcha funksiyalar faol! ✅")
+    await m.answer(f"Assalomu alaykum {m.from_user.full_name}! 🌟 Men eng kuchli Gemini 1.5 Pro botiman.Men nimalar qila olaman? /help bosing. ✅✅")
+Men eng kuchli Gemini 1.5 Pro botiman.
+
 
 @dp.message(Command("help"))
 async def cmd_help(m: types.Message):
