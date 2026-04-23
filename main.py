@@ -25,9 +25,8 @@ ADMIN_ID = 7806849831 # UserInfoBot orqali olingan aniq ID
 genai.configure(api_key="AIzaSyByFX3e2Esr33QuWrI8nd4FRE3QSsPDN94")
 model = genai.GenerativeModel(
     model_name='gemini-2.5-flash', 
-    tools=[{"google_search_queries": {}}] # Internetdan qidirish yoqildi
+    tools=[{"google_search": {}}] 
 )
-
 logging.basicConfig(level=logging.INFO)
 dp = Dispatcher()
 app = Flask('')
