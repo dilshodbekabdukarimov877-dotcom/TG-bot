@@ -3,7 +3,7 @@ from threading import Thread
 from PIL import Image
 from flask import Flask
 
-# --- KUTUBXONALARNI MAJBURIY O'RNATISH ---
+# --- KUTUBXONALARNI O'RNATISH ---
 def install_packages():
     packages = ["aiogram", "google-generativeai", "Pillow", "flask"]
     for p in packages:
@@ -17,15 +17,15 @@ from aiogram import Bot, Dispatcher, types, F
 from aiogram.filters import Command, CommandObject
 from aiogram.types import InlineQueryResultArticle, InputTextMessageContent, InlineQueryResultPhoto
 
-# --- SOZLAMALAR ---
+# --- SOZLAMALAR (DIQQAT BILAN TO'LDIRING) ---
 TOKEN = "8376336640:AAGJzxZ2fvN-71gsucdGACqqlhBVv2lFrak"
-GEMINI_KEY = "AIzaSyByFX3e2Esr33QuWrI8nd4FRE3QSsPDN94" # O'z kalitingizni qo'ying
-ADMIN_ID = 5122557577
+GEMINI_KEY = "AIzaSyByFX3e2Esr33QuWrI8nd4FRE3QSsPDN94" 
+ADMIN_ID = 7806849831 # UserInfoBot orqali olingan aniq ID
 
 genai.configure(api_key="AIzaSyByFX3e2Esr33QuWrI8nd4FRE3QSsPDN94")
 model = genai.GenerativeModel(
-    model_name='gemini-2.5-flash',
-    tools='google_search_retrieval'
+    model_name='gemini-2.5-flash', 
+    tools=[{"google_search_queries": {}}] # Internetdan qidirish yoqildi
 )
 
 logging.basicConfig(level=logging.INFO)
@@ -60,71 +60,73 @@ def get_chat(u_id):
 @dp.message(Command("start"))
 async def cmd_start(m: types.Message):
     add_user(m.from_user.id)
-    await m.answer(f"Assalomu alaykum, {m.from_user.full_name}! 🌟\nMen eng kuchli Gemini 1.5 Pro botiman.\n\nMen nimalar qila olaman? /help bosing.")
+    await m.answer(f"Assalomu alaykum, {m.from_user.full_name}! 🌟\nMen eng so'nggi Gemini 3 Flash modeliman.\n\nYordam kerak bo'lsa /help buyrug'ini bosing.")
 
 @dp.message(Command("help"))
 async def cmd_help(m: types.Message):
     help_text = (
         "🤖 **Bot imkoniyatlari:**\n\n"
-        "💬 **Suhbat:** Men bilan xuddi insondek gaplashing, oldingi gaplaringizni eslayman.\n"
-        "🌐 **Internet:** Eng so'nggi yangiliklarni Google'dan qidirib topaman.\n"
-        "🖼 **Media:** Rasm, Video yoki PDF tahlil qilaman.\n"
+        "💬 **Suhbat:** Men bilan gaplashing, tarixingizni eslab qolaman.\n"
+        "🌐 **Internet:** Google orqali real vaqtda qidiruv qilaman.\n"
+        "🖼 **Media:** Rasm, Video yoki PDF yuboring, tahlil qilaman.\n"
         "🎙 **Ovoz:** Ovozli xabarlaringizni tushunaman.\n"
-        "⏰ **Eslatkich:** `/remind 10 dars` - 10 minutdan keyin eslataman.\n"
-        "🧹 **Tozalash:** `/clear` - Xotirani o'chirish.\n"
-        "✨ **Inline:** `@bot_nomi savol` - Istalgan guruhda javob beraman."
+        "⏰ **Eslatkich:** `/remind 5 dars` - vaqtida xabar beraman.\n"
+        "🧹 **Tozalash:** `/clear` - suhbat tarixini o'chirish.\n\n"
+        "👨‍💻 **Admin:** `/stat`, `/reklama`."
     )
     await m.answer(help_text, parse_mode="Markdown")
 
 @dp.message(Command("clear"))
 async def cmd_clear(m: types.Message):
     conn = sqlite3.connect(DB_NAME); conn.execute('DELETE FROM history WHERE user_id = ?', (m.from_user.id,)); conn.commit(); conn.close()
-    await m.answer("🧹 Xotira tozalandi. Yangi suhbat boshlashimiz mumkin!")
+    await m.answer("🧹 Xotira tozalandi! Yangi mavzuda gaplashishimiz mumkin.")
 
 # --- ADMIN PANEL ---
 
 @dp.message(Command("stat"))
 async def cmd_stat(m: types.Message):
-    if m.from_user.id != ADMIN_ID: return
+    if m.from_user.id != ADMIN_ID:
+        await m.answer("⛔️ Kechirasiz, bu buyruq faqat admin uchun.")
+        return
     conn = sqlite3.connect(DB_NAME); count = conn.execute('SELECT count(*) FROM users').fetchone()[0]; conn.close()
-    await m.answer(f"📊 Foydalanuvchilar: {count} ta")
+    await m.answer(f"📊 Jami foydalanuvchilar: {count} ta")
 
 @dp.message(Command("reklama"))
 async def cmd_reklama(m: types.Message, bot: Bot):
-    if m.from_user.id != ADMIN_ID: return
+    if m.from_user.id != ADMIN_ID:
+        await m.answer("⛔️ Sizda reklama yuborish huquqi yo'q.")
+        return
     text = m.text.replace("/reklama", "").strip()
-    if not text: return await m.answer("Xabar yozing.")
+    if not text: return await m.answer("Xabar matnini kiriting: `/reklama Salom!`")
+    
     conn = sqlite3.connect(DB_NAME); users = conn.execute('SELECT user_id FROM users').fetchall(); conn.close()
+    success, fail = 0, 0
     for u in users:
-        try: await bot.send_message(u[0], text); await asyncio.sleep(0.05)
-        except: continue
-    await m.answer("✅ Yuborildi.")
+        try: await bot.send_message(u[0], text); success += 1; await asyncio.sleep(0.05)
+        except: fail += 1
+    await m.answer(f"📢 Natija:\n✅ Yetkazildi: {success}\n❌ Yetkazilmadi: {fail}")
 
 # --- ESLATKICHLAR ---
 
 @dp.message(Command("remind"))
 async def cmd_remind(m: types.Message, command: CommandObject):
-    if not command.args: return await m.answer("Masalan: `/remind 5 choy ichish` (minutlarda)")
+    if not command.args: return await m.answer("Format: `/remind 10 dars` (minutlarda)")
     try:
         minutes, task = command.args.split(" ", 1)
         r_time = datetime.datetime.now() + datetime.timedelta(minutes=int(minutes))
-        conn = sqlite3.connect(DB_NAME)
-        conn.execute('INSERT INTO reminders VALUES (?, ?, ?)', (m.from_user.id, r_time.isoformat(), task))
-        conn.commit(); conn.close()
+        conn = sqlite3.connect(DB_NAME); conn.execute('INSERT INTO reminders VALUES (?, ?, ?)', (m.from_user.id, r_time.isoformat(), task)); conn.commit(); conn.close()
         await m.answer(f"✅ Saqlandi! {minutes} minutdan keyin eslataman.")
-    except: await m.answer("❌ Xato! `/remind [minut] [vazifa]`")
+    except: await m.answer("❌ Xato! Masalan: `/remind 5 choy ichish`")
 
 async def check_reminders(bot: Bot):
     while True:
         now = datetime.datetime.now().isoformat()
-        conn = sqlite3.connect(DB_NAME)
-        tasks = conn.execute('SELECT rowid, user_id, task FROM reminders WHERE time <= ?', (now,)).fetchall()
+        conn = sqlite3.connect(DB_NAME); tasks = conn.execute('SELECT rowid, user_id, task FROM reminders WHERE time <= ?', (now,)).fetchall()
         for r_id, u_id, tsk in tasks:
             try: await bot.send_message(u_id, f"🔔 **ESLATMA:** {tsk}")
             except: pass
             conn.execute('DELETE FROM reminders WHERE rowid = ?', (r_id,))
-        conn.commit(); conn.close()
-        await asyncio.sleep(20)
+        conn.commit(); conn.close(); await asyncio.sleep(20)
 
 # --- MEDIA VA OVOZ ---
 
@@ -132,23 +134,21 @@ async def check_reminders(bot: Bot):
 async def handle_voice(m: types.Message, bot: Bot):
     wait = await m.answer("🎙 Eshityapman...")
     try:
-        f = await bot.get_file(m.voice.file_id)
-        d = await bot.download_file(f.file_path)
+        f = await bot.get_file(m.voice.file_id); d = await bot.download_file(f.file_path)
         resp = model.generate_content(["Ovozni matnga o'gir va javob ber:", {"mime_type": "audio/ogg", "data": d.read()}])
         await wait.edit_text(resp.text)
-    except: await wait.edit_text("🎙 Ovozda xato bo'ldi.")
+    except: await wait.edit_text("🎙 Ovozni tushunishda xatolik bo'ldi.")
 
 @dp.message(F.document | F.video | F.photo)
 async def handle_media(m: types.Message, bot: Bot):
     wait = await m.answer("🔍 Tahlil qilinmoqda...")
     try:
         f_id = m.document.file_id if m.document else (m.video.file_id if m.video else m.photo[-1].file_id)
-        f_path = await bot.get_file(f_id)
-        f_data = await bot.download_file(f_path.file_path)
+        f_path = await bot.get_file(f_id); f_data = await bot.download_file(f_path.file_path)
         mime = m.document.mime_type if m.document else ("video/mp4" if m.video else "image/jpeg")
         resp = model.generate_content([m.caption or "Tahlil qil:", {"mime_type": mime, "data": f_data.read()}])
         await wait.edit_text(resp.text)
-    except: await wait.edit_text("❌ Xato.")
+    except: await wait.edit_text("❌ Fayl juda katta yoki noto'g'ri format.")
 
 # --- INLINE MODE ---
 
@@ -165,7 +165,7 @@ async def inline_handler(q: types.InlineQuery):
         await q.answer(results, cache_time=5)
     except: pass
 
-# --- ASOSIY MATN (AI) ---
+# --- MATNLI SUHBAT (AI) ---
 
 @dp.message(F.text)
 async def handle_text(m: types.Message):
@@ -178,11 +178,11 @@ async def handle_text(m: types.Message):
         save_chat(m.from_user.id, "user", m.text)
         save_chat(m.from_user.id, "model", resp.text)
         await m.answer(resp.text)
-    except: await m.answer("⏳ Server band.")
+    except: await m.answer("⏳ Serverda yuklama yuqori, birozdan so'ng urinib ko'ring.")
 
-# --- ISHGA TUSHIRISH ---
+# --- RENDER KEEPALIVE ---
 @app.route('/')
-def home(): return "Online"
+def home(): return "Bot is Online 🚀"
 def run(): port = int(os.environ.get("PORT", 8080)); app.run(host='0.0.0.0', port=port)
 
 async def main():
