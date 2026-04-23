@@ -30,9 +30,10 @@ genai.configure(api_key="AIzaSyAO2vkYx9l7nCUp0yS8CbO9Hko7fv5rRQ4")
 # Kutubxonaning o'zidan kerakli asbobni chaqiramiz
 from google.generativeai.types import content_types
 
+# Kutubxona uchun eng tushunarli format
 model = genai.GenerativeModel(
-    model_name='gemini-1.5-flash', # Barqaror model
-    tools=[content_types.Tool(google_search_retrieval=content_types.GoogleSearchRetrieval())]
+    model_name='gemini-2.5-flash',
+    tools=[{'google_search_retrieval': {}}] 
 )
 
 logging.basicConfig(level=logging.INFO)
