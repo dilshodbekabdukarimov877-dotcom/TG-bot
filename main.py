@@ -31,9 +31,12 @@ genai.configure(api_key="AIzaSyAO2vkYx9l7nCUp0yS8CbO9Hko7fv5rRQ4")
 from google.generativeai.types import content_types
 
 # Kutubxona uchun eng tushunarli format
+# Kutubxonani o'zidan Tool klassini chaqiramiz
+from google.generativeai import types as reporting_types
+
 model = genai.GenerativeModel(
     model_name='gemini-2.5-flash',
-    tools=[{'google_search_retrieval': {}}] 
+    tools=[reporting_types.Tool(google_search=reporting_types.GoogleSearch())]
 )
 
 logging.basicConfig(level=logging.INFO)
