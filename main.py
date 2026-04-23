@@ -23,9 +23,12 @@ GEMINI_KEY = "AIzaSyByFX3e2Esr33QuWrI8nd4FRE3QSsPDN94"
 ADMIN_ID = 7806849831 # UserInfoBot orqali olingan aniq ID
 
 genai.configure(api_key="AIzaSyByFX3e2Esr33QuWrI8nd4FRE3QSsPDN94")
+# Google Search-ni eng sodda va xatosiz usulda ulash
+from google.generativeai.types import content_types
+
 model = genai.GenerativeModel(
-    model_name='gemini-2.5-flash', 
-    tools=[{"google_search": {}}] 
+    model_name='gemini-2.5-flash', # Barqaror model nomiga qaytdik
+    tools=[types.Tool(google_search_retrieval=content_types.GoogleSearchRetrieval())]
 )
 logging.basicConfig(level=logging.INFO)
 dp = Dispatcher()
