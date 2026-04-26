@@ -19,10 +19,10 @@ from aiogram.types import InlineQueryResultArticle, InputTextMessageContent
 
 # --- SOZLAMALAR ---
 TOKEN = "8376336640:AAGJzxZ2fvN-71gsucdGACqqlhBVv2lFrak"
-GEMINI_KEY = "AIzaSyC5fH4bmr0S4tt9G0yJL6B80pYEdyqe1G8" 
+GEMINI_KEY = "AIzaSyBNwW5RpAliPPgPHZHhWDWb7uE3oq6qpLo" 
 ADMIN_ID = 7806849831
 
-genai.configure(api_key="AIzaSyC5fH4bmr0S4tt9G0yJL6B80pYEdyqe1G8")
+genai.configure(api_key="AIzaSyBNwW5RpAliPPgPHZHhWDWb7uE3oq6qpLo")
 # QIDIRUVSIZ, LEKIN 2.5 FLASH MODELI BILAN
 model = genai.GenerativeModel(model_name='gemini-2.5-flash')
 
